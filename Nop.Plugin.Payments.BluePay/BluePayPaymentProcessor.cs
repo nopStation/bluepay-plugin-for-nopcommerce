@@ -17,6 +17,7 @@ using Nop.Services.Localization;
 using Nop.Services.Payments;
 using System.Threading.Tasks;
 using Nop.Services.Common;
+using Nop.Services.Orders;
 
 namespace Nop.Plugin.Payments.BluePay
 {
@@ -31,12 +32,12 @@ namespace Nop.Plugin.Payments.BluePay
         private readonly ICurrencyService _currencyService;
         private readonly ICustomerService _customerService;
         private readonly ISettingService _settingService;
-        private readonly IPaymentService _paymentService;
         private readonly IWebHelper _webHelper;
         private readonly ILocalizationService _localizationService;
         private readonly IAddressService _addressService;
         private readonly ICountryService _countryService;
         private readonly IStateProvinceService _stateProvinceService;
+        private readonly IOrderTotalCalculationService _orderTotalCalculationService;
 
         #endregion
 
@@ -46,23 +47,23 @@ namespace Nop.Plugin.Payments.BluePay
             ICurrencyService currencyService,
             ICustomerService customerService,
             ISettingService settingService,
-            IPaymentService paymentService,
             IWebHelper webHelper,
             ILocalizationService localizationService,
             IAddressService addressService,
             ICountryService countryService,
-            IStateProvinceService stateProvinceService)
+            IStateProvinceService stateProvinceService,
+            IOrderTotalCalculationService orderTotalCalculationService)
         {
             _bluePayPaymentSettings = bluePayPaymentSettings;
             _currencyService = currencyService;
             _customerService = customerService;
             _settingService = settingService;
-            _paymentService = paymentService;
             _webHelper = webHelper;
             _localizationService = localizationService;
             _addressService = addressService;
             _countryService = countryService;
             _stateProvinceService = stateProvinceService;
+            _orderTotalCalculationService = orderTotalCalculationService;
         }
 
         #endregion
@@ -447,7 +448,7 @@ namespace Nop.Plugin.Payments.BluePay
         /// <returns>Additional handling fee</returns>
         public async Task<decimal> GetAdditionalHandlingFeeAsync(IList<ShoppingCartItem> cart)
         {
-            var result = await _paymentService.CalculateAdditionalFeeAsync(cart,
+            var result = await _orderTotalCalculationService.CalculatePaymentAdditionalFeeAsync(cart,
                 _bluePayPaymentSettings.AdditionalFee, _bluePayPaymentSettings.AdditionalFeePercentage);
             return result;
         }
@@ -507,30 +508,30 @@ namespace Nop.Plugin.Payments.BluePay
         public override async Task InstallAsync()
         {
             //settings
-            _settingService.SaveSettingAsync(new BluePayPaymentSettings
+            await _settingService.SaveSettingAsync(new BluePayPaymentSettings
             {
                 TransactMode = TransactMode.Authorize,
                 UseSandbox = true
             });
 
             //locales
-            _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AccountId", "Account ID");
-            _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AccountId.Hint", "Specify BluePay account number.");
-            _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AdditionalFee", "Additional fee");
-            _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
-            _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AdditionalFeePercentage", "Additional fee. Use percentage");
-            _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AdditionalFeePercentage.Hint", "Determines whether to apply a percentage additional fee to the order total. If not enabled, a fixed value is used.");
-            _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.SecretKey", "Secret key");
-            _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.SecretKey.Hint", "Specify API secret key.");
-            _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.TransactMode", "Transaction mode");
-            _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.TransactMode.Hint", "Specify transaction mode.");
-            _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.UserId", "User ID");
-            _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.UserId.Hint", "Specify BluePay user number.");
-            _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.UseSandbox", "Use sandbox");
-            _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.UseSandbox.Hint", "Check to enable sandbox (testing environment).");
-            _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.PaymentMethodDescription", "Pay by credit / debit card");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AccountId", "Account ID");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AccountId.Hint", "Specify BluePay account number.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AdditionalFee", "Additional fee");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AdditionalFeePercentage", "Additional fee. Use percentage");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AdditionalFeePercentage.Hint", "Determines whether to apply a percentage additional fee to the order total. If not enabled, a fixed value is used.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.SecretKey", "Secret key");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.SecretKey.Hint", "Specify API secret key.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.TransactMode", "Transaction mode");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.TransactMode.Hint", "Specify transaction mode.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.UserId", "User ID");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.UserId.Hint", "Specify BluePay user number.");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.UseSandbox", "Use sandbox");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.Fields.UseSandbox.Hint", "Check to enable sandbox (testing environment).");
+            await _localizationService.AddOrUpdateLocaleResourceAsync("Plugins.Payments.BluePay.PaymentMethodDescription", "Pay by credit / debit card");
 
-            base.InstallAsync();
+            await base.InstallAsync();
         }
         
         /// <summary>
@@ -539,26 +540,26 @@ namespace Nop.Plugin.Payments.BluePay
         public override async Task UninstallAsync()
         {
             //settings
-            _settingService.DeleteSettingAsync<BluePayPaymentSettings>();
+            await _settingService.DeleteSettingAsync<BluePayPaymentSettings>();
 
             //locales
-            _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AccountId");
-            _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AccountId.Hint");
-            _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AdditionalFee");
-            _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AdditionalFee.Hint");
-            _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AdditionalFeePercentage");
-            _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AdditionalFeePercentage.Hint");
-            _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.SecretKey");
-            _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.SecretKey.Hint");
-            _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.TransactMode");
-            _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.TransactMode.Hint");
-            _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.UserId");
-            _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.UserId.Hint");
-            _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.UseSandbox");
-            _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.UseSandbox.Hint");
-            _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.PaymentMethodDescription");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AccountId");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AccountId.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AdditionalFee");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AdditionalFee.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AdditionalFeePercentage");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.AdditionalFeePercentage.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.SecretKey");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.SecretKey.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.TransactMode");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.TransactMode.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.UserId");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.UserId.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.UseSandbox");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.Fields.UseSandbox.Hint");
+            await _localizationService.DeleteLocaleResourceAsync("Plugins.Payments.BluePay.PaymentMethodDescription");
 
-            base.UninstallAsync();
+            await base.UninstallAsync();
         }
 
         #endregion
